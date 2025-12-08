@@ -14,7 +14,7 @@ from tqdm import tqdm
 #%%
 # configuração de logging
 logging.basicConfig(
-    level=logging.INFO,   # <-- CORRIGIDO
+    level=logging.INFO,   
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
 
@@ -49,7 +49,7 @@ class FakerStoreEtl:
             response.raise_for_status()
             time.sleep(0.5)
             return response.json()
-        except requests.exceptions.RequestException as e:   # <-- CORRIGIDO
+        except requests.exceptions.RequestException as e:   
             logger.error(f"Erro na requisição {url}: {e}")
             raise
 
@@ -59,7 +59,7 @@ class FakerStoreEtl:
         logger.info("Extraindo produtos...")
 
         # Faz requisição
-        data = self._make_request("products")   # <-- nome corrigido
+        data = self._make_request("products")   
 
         # Normaliza JSON em DataFrame
         df = pd.json_normalize(
@@ -84,4 +84,63 @@ class FakerStoreEtl:
 
 # Criar DataFrame com informações detalhadas
         category_data = []
+        for cat in categories:
+            product=self._make_requests(f"products/category/{cat}")
+            category_data.append({
+                'category':cat,
+                'product_count': len(product),
+                'avg_price': sum(p['price'] for p in product) / len(product),
+                'min_price': min(p['price'] for p in product),
+                'max_price': max (p['price'] for p in product),
+                'extracted_at': datetime.now()
+})
+                                                     
+        df = pd.DataFrame(category_data)
+        logger.info(f"extraidos{len(df)} categorias")
+        return df  
+    
+    
+    def extract_users(self) -> pd.DataFrame:
+        """" Extrair todos os usuarios"""
+        logger.info("Extraindo Usuarios...")
+        data = self._make_request("users")
         
+        #Normqlizar estrutura aninhada
+        
+        df = pd.json_normalize(
+            data,
+            sep='_',
+            max_level=3)
+        
+        df['extracted_at'] = datetime.now()
+        logger.info(f"extraidos{len(df)}usuarios")
+        return df
+    
+    
+    def extract_carts(self) -> pd.DataFrame:
+        """Extrai todos os carrinhos."""
+        logger.info("Extraindo carrinhos...")
+
+        data = self._make_request("carts")
+
+        cart_products = []
+        for cart in data:
+            for product in cart["products"]:
+                cart_products.append({
+                    "cart_id": cart["id"],
+                    "user_id": cart["userId"],
+                    "date": cart["date"],
+                    "product_id": product["productId"],
+                    "quantity": product["quantity"],
+                })
+
+        df = pd.DataFrame(cart_products)
+        df["date"] = pd.to_datetime(df["date"])
+        df["extracted_at"] = datetime.now()
+
+        logger.info(f"Extraídos {len(data)} carrinhos com {len(df)} itens")
+        return df
+    
+    def save_to_parquet()
+
+            
