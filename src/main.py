@@ -141,6 +141,24 @@ class FakerStoreEtl:
         logger.info(f"Extraídos {len(data)} carrinhos com {len(df)} itens")
         return df
     
-    def save_to_parquet()
+    def save_to_parquet(
+        self,
+        df:pd.DataFrame,
+        filename:str,
+        compression: str='snappy',
+        partition_cols: Optional[List[str]] = None
+    
+    ):
+         """
+        Salva DataFrame em formato Parquet.
+        
+        Args:
+            df: DataFrame a ser salvo
+            filename: Nome do arquivo (sem extensão)
+            compression: Tipo de compressão (snappy, gzip, brotli, none)
+            partition_cols: Colunas para particionar os dados
+        """
+    filepath = self.output_dir / f"{filename}.parquet"
+    logger.info(f"Salvando {len(df)} registros em {filepath}")         
 
             
